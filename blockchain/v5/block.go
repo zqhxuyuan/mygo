@@ -11,7 +11,7 @@ import (
 type Block struct {
 	Timestamp int64
 	//Data          []byte
-	transactions  []*Transaction
+	Transactions  []*Transaction
 	PrevBlockHash []byte
 	Hash          []byte
 	Nonce         int // add nonce field
@@ -21,7 +21,7 @@ func (block *Block) HashTransactions() []byte {
 	var txhashes [][]byte
 	var txhash [32]byte
 
-	for _, tx := range block.transactions {
+	for _, tx := range block.Transactions {
 		txhashes = append(txhashes, tx.ID)
 	}
 
@@ -38,23 +38,25 @@ func (block *Block) HashTransactions() []byte {
 
 func (b *Block) Serialize() []byte {
 	var result bytes.Buffer
+
 	encoder := gob.NewEncoder(&result)
 	err := encoder.Encode(b)
 	if err != nil {
 		log.Panic(err)
 	}
+
 	return result.Bytes()
 }
 
 func Deserialize(buf []byte) *Block {
-	reader := bytes.NewReader(buf)
-	decoder := gob.NewDecoder(reader)
-
 	var block Block
+
+	decoder := gob.NewDecoder(bytes.NewReader(buf))
 	err := decoder.Decode(&block)
 	if err != nil {
 		log.Panic(err)
 	}
+
 	return &block
 }
 

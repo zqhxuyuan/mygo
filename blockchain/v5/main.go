@@ -13,7 +13,7 @@ import (
 const targetBits = 24
 const dbFile = "blockchain.db"
 const blocksBucket = "blocks"
-const genesisCoinbaseData = "The Times 03/Jan/2009 Chancellor on brink of second bailout for banks"
+const genesisCoinbaseData = "Genesis..."
 
 var (
 	maxNonce = math.MaxInt64
@@ -32,12 +32,7 @@ type CLI struct {
 	//blockchain *BlockChain
 }
 
-func (cli *CLI) CreateBlockchain(address string) {
-	blockchain := CreateBlockchain(address)
-	blockchain.db.Close()
-	fmt.Println("create block chain done!")
-}
-
+// 原先的AddBlock由send方法代替。另外，增加了getbalance方法
 func (cli *CLI) printUsage() {
 	fmt.Println("Usage:")
 	fmt.Println("  getbalance -address ADDRESS - Get balance of ADDRESS")
@@ -63,6 +58,14 @@ func (cli *CLI) Run() {
 	createBlockchainCmd := flag.NewFlagSet("createblockchain", flag.ExitOnError)
 	createBlockchainAddress := createBlockchainCmd.String("address", "", "the address to send genesis block reward")
 
+	sendCmd := flag.NewFlagSet("send", flag.ExitOnError)
+	sendFrom := sendCmd.String("from", "", "transfer sender address")
+	sendTo := sendCmd.String("to", "", "transfer receiver address")
+	sendAmount := sendCmd.Int("amount", 0, "transfer how much money")
+
+	getBalanceCmd := flag.NewFlagSet("getBalance", flag.ExitOnError)
+	getBalanceAddress := getBalanceCmd.String("address", "", "address")
+
 	switch os.Args[1] {
 	// case "addblock":
 	// 	error := addBlockCmd.Parse(os.Args[2:])
@@ -76,6 +79,16 @@ func (cli *CLI) Run() {
 		}
 	case "printchain":
 		error := printChainCmd.Parse(os.Args[2:])
+		if error != nil {
+			log.Panic(error)
+		}
+	case "send":
+		error := sendCmd.Parse(os.Args[2:])
+		if error != nil {
+			log.Panic(error)
+		}
+	case "getBalance":
+		error := getBalanceCmd.Parse(os.Args[2:])
 		if error != nil {
 			log.Panic(error)
 		}
@@ -97,11 +110,27 @@ func (cli *CLI) Run() {
 			createBlockchainCmd.Usage()
 			os.Exit(1)
 		}
-		cli.CreateBlockchain(*createBlockchainAddress)
+		cli.createBlockchain(*createBlockchainAddress)
 	}
 
 	if printChainCmd.Parsed() {
 		cli.printChain()
+	}
+
+	if sendCmd.Parsed() {
+		if *sendFrom != "" && *sendTo != "" && *sendAmount > 0 {
+			cli.send(*sendFrom, *sendTo, *sendAmount)
+		} else {
+			sendCmd.Usage()
+			os.Exit(1)
+		}
+	}
+
+	if getBalanceCmd.Parsed() {
+		if *getBalanceAddress == "" {
+			os.Exit(1)
+		}
+		cli.getBalance(*getBalanceAddress)
 	}
 }
 

@@ -29,6 +29,8 @@ type TXOutput struct {
 
 func (tx Transaction) IsCoinbase() bool {
 	return len(tx.Vout) == 1 && len(tx.Vin[0].Txid) == 0 && tx.Vin[0].Vout == -1
+	// 文章中的代码是错误的，tx.Vin表示输入，coinbase没有输入。输出只有一个，所以应该是len(tx.Vout)=1
+	//return len(tx.Vin) == 1 && len(tx.Vin[0].Txid) == 0 && tx.Vin[0].Vout == -1
 }
 
 func (tx *Transaction) SetID() {
@@ -53,6 +55,7 @@ func (input *TXInput) CanUnlockOutputWith(unlockingdata string) bool {
 	return input.ScriptSig == unlockingdata
 }
 
+// NewCoinbaseTX 构建coinbase交易，没有输入，只有一个输出
 func NewCoinbaseTX(to, data string) *Transaction {
 	if data == "" {
 		data = fmt.Sprintf("Reward to '%s'", to)

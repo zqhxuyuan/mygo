@@ -26,12 +26,18 @@ func (bc *BlockChain) Iterator() *BlockChainIterator {
 
 func (i *BlockChainIterator) Next() *Block {
 	var block *Block
-	i.db.Update(func(tx *bolt.Tx) error {
+	error := i.db.Update(func(tx *bolt.Tx) error {
 		bucket := tx.Bucket([]byte(blocksBucket))
+		//fmt.Println("current hash:", i.currentHash)
 		encodedBlock := bucket.Get(i.currentHash)
+		//fmt.Println("encode block:", encodedBlock)
 		block = Deserialize(encodedBlock)
 		return nil
 	})
+
+	if error != nil {
+		log.Panic(error)
+	}
 
 	i.currentHash = block.PrevBlockHash
 
@@ -79,29 +85,25 @@ func NewGenesisBlock(coinbase *Transaction) *Block {
 // 	return &BlockChain{[]*Block{NewGenesisBlock()}}
 // }
 
-func NewBlockChain(address string) *BlockChain {
+// 使用该方法时，必须先调用过CreateBlockChain（而且只能调用一次）
+func NewBlockChain() *BlockChain {
+	if dbExists() == false {
+		fmt.Println("No existing blockchain found. Create one first.")
+		os.Exit(1)
+	}
+
 	var tip []byte
 
 	db, err := bolt.Open(dbFile, 0600, nil)
 	err = db.Update(func(tx *bolt.Tx) error {
 		bucket := tx.Bucket([]byte(blocksBucket))
-		if bucket == nil {
-			fmt.Println("No existing blockchain found. Creating a new one...")
-			//genesis := NewGenesisBlock()
-			coinbaseTx := NewCoinbaseTX(address, genesisCoinbaseData)
-			genesis := NewGenesisBlock(coinbaseTx)
-			bucket, err = tx.CreateBucket([]byte(blocksBucket))
-			err = bucket.Put(genesis.Hash, genesis.Serialize())
-			err = bucket.Put([]byte("l"), genesis.Hash)
-			tip = genesis.Hash
-		} else {
-			tip = bucket.Get([]byte("l"))
-		}
+		tip = bucket.Get([]byte("l"))
 		return nil
 	})
 	if err != nil {
 		log.Panic(err)
 	}
+	//fmt.Println("new blockchain tip:", tip)
 	return &BlockChain{db, tip}
 }
 
@@ -114,6 +116,7 @@ func dbExists() bool {
 
 // 创建一个新的区块链数据库，address用来接收挖出创世块的奖励
 func CreateBlockchain(address string) *BlockChain {
+	// 只能调用一次CreateBlockChain方法
 	if dbExists() {
 		fmt.Println("Blockchain already exists.")
 		os.Exit(1)
@@ -127,9 +130,21 @@ func CreateBlockchain(address string) *BlockChain {
 		cbtx := NewCoinbaseTX(address, genesisCoinbaseData)
 		genesis := NewGenesisBlock(cbtx)
 		bucket, err := tx.CreateBucket([]byte(blocksBucket))
+		if err != nil {
+			log.Panic(err)
+		}
+		genesisHash := genesis.Hash
+		fmt.Println("genesis hash:", genesisHash)
 		err = bucket.Put(genesis.Hash, genesis.Serialize())
-		err = bucket.Put([]byte("1"), genesis.Hash)
+		if err != nil {
+			log.Panic(err)
+		}
+		err = bucket.Put([]byte("l"), genesis.Hash)
+		if err != nil {
+			log.Panic(err)
+		}
 		tip = genesis.Hash
+
 		return nil
 	})
 	if err != nil {
