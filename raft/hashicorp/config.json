@@ -1,0 +1,4 @@
+{
+    "bind": "localhost:12345",
+    "data_dir": "/tmp/raft"
+}
