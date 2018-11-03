@@ -30,7 +30,6 @@ func (i *BlockChainIterator) Next() *Block {
 		bucket := tx.Bucket([]byte(blocksBucket))
 		//fmt.Println("current hash:", i.currentHash)
 		encodedBlock := bucket.Get(i.currentHash)
-		//fmt.Println("encode block:", encodedBlock)
 		block = Deserialize(encodedBlock)
 		return nil
 	})
@@ -134,16 +133,16 @@ func CreateBlockchain(address string) *BlockChain {
 			log.Panic(err)
 		}
 		genesisHash := genesis.Hash
-		fmt.Println("genesis hash:", genesisHash)
-		err = bucket.Put(genesis.Hash, genesis.Serialize())
+		//fmt.Println("genesis hash:", genesisHash)
+		err = bucket.Put(genesisHash, genesis.Serialize())
 		if err != nil {
 			log.Panic(err)
 		}
-		err = bucket.Put([]byte("l"), genesis.Hash)
+		err = bucket.Put([]byte("l"), genesisHash)
 		if err != nil {
 			log.Panic(err)
 		}
-		tip = genesis.Hash
+		tip = genesisHash
 
 		return nil
 	})
