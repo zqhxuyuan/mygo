@@ -28,7 +28,6 @@ func (i *BlockChainIterator) Next() *Block {
 	var block *Block
 	error := i.db.Update(func(tx *bolt.Tx) error {
 		bucket := tx.Bucket([]byte(blocksBucket))
-		//fmt.Println("current hash:", i.currentHash)
 		encodedBlock := bucket.Get(i.currentHash)
 		block = Deserialize(encodedBlock)
 		return nil
