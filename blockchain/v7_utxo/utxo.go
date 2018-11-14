@@ -87,27 +87,33 @@ func (bc *BlockChain) FindUTXO(pubKeyHash []byte) []TXOutput {
 // v7: 下面这个方法返回的是含有未花费输出Transaction的ID，以及具体哪几个输出是未花费的
 func (bc *BlockChain) FindUnspentTransactionsX() map[string][]TXOutput {
 	//var unspentTXs []Transaction
+	//未花费
 	UTXO := make(map[string][]TXOutput)
+	//已花费，key为txid，value为已经花费的输出在trasaction中的index
 	spentTXOs := make(map[string][]int)
 	bci := bc.Iterator()
 
 	for {
 		block := bci.Next()
 
-	Outputs:
 		for _, tx := range block.Transactions {
 			txID := hex.EncodeToString(tx.ID)
 
 			// 先处理outputs
 			// outIdx: TXOutput在outputs数组中的indx
 			// output: outIdx对应的TXOutput对象
+		Outputs:
 			for outIdx, output := range tx.Vout {
+				//当前输出在已经花费的输出集合中，跳过，处理下一条
+				//如果不在已花费的输出中，说明遍历完了整个事务，都没有找到这个输出，说明这个输出是未花费的，可以加入UTXO集合中
 				if spentTXOs[txID] != nil {
 					// spentOut(inputSpentOutIdx): 通过(后面先遍历的Tx)inputs，记录的index
 					for _, inputSpentOutIdx := range spentTXOs[txID] {
 						if inputSpentOutIdx == outIdx {
 							// 如果在(txid对应的)spent output index数组里，说明已经被花费了，则它一定不会被加入到unspentTXs中
 							continue Outputs
+							//注意Outputs的位置！不能放在block.Transactions那里！因为一笔Trasaction会有多个输出,必须处理每个输出
+							//只不过有些输出因为被花费过了，所以不需要加入到UTXO集合中
 						}
 					}
 				}

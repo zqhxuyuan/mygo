@@ -17,13 +17,14 @@ func (bc *BlockChain) FindUnspentTransactions(pubKeyHash []byte) []Transaction {
 	for {
 		block := bci.Next()
 
-	Outputs:
+		//Outputs:
 		for _, tx := range block.Transactions {
 			txID := hex.EncodeToString(tx.ID)
 
 			// 先处理outputs
 			// outIdx: TXOutput在outputs数组中的indx
 			// output: outIdx对应的TXOutput对象
+		Outputs:
 			for outIdx, output := range tx.Vout {
 				if spentTXOs[txID] != nil {
 					// spentOut(inputSpentOutIdx): 通过(后面先遍历的Tx)inputs，记录的index

@@ -36,7 +36,7 @@ func (cli *CLI) send(from, to string, amount int) {
 
 	// change AddBlock method name to MineBlock
 	newBlock := blockchain.AddBlock(txs)
-	fmt.Println("Mined Block done!")
+	fmt.Printf("Mined Block done!, Reward to %s\n", from)
 
 	UTXOSet.Update(newBlock)
 	fmt.Println("Update UTXO success!")

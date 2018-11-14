@@ -57,6 +57,7 @@ func (u UTXOSet) FindSpendableOutputs(pubKeyHash []byte, amount int) (int, map[s
 	unspentOutputs := make(map[string][]int)
 
 	// 获取一个帐号的所有未花费Transactions，但是最后并不需要返回所有未花费输出的余额总和
+	// 原先通过遍历区块链获取所有未花费的输出，现在因为这些数据保存在DB中，可以查询DB来获取
 	//unspentTransactions := bc.FindUnspentTransactions(pubKeyHash)
 
 	db := u.Blockchain.db
